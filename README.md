@@ -1,2 +1,2 @@
-# Example
-An example greeter plugin
+# Npc Marker
+Marks all NPCs in the players region when a hotkey is pressed.
