@@ -1,21 +1,16 @@
-package com.example;
+package com.npcmarker;
 
 import net.runelite.api.Client;
-import net.runelite.api.Model;
 import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
-import net.runelite.client.config.Keybind;
 import net.runelite.client.game.NpcUtil;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
-import net.runelite.client.util.HotkeyListener;
 
 import javax.inject.Inject;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 
 public class NpcMarkerOverlay extends Overlay
 {
@@ -53,7 +48,7 @@ public class NpcMarkerOverlay extends Overlay
                 Shape objectClickbox = npc.getConvexHull();
                 if (objectClickbox != null)
                 {
-                    renderPoly(graphics, outlineColor, fillColor, objectClickbox, 2, true);
+                    renderPoly(graphics, outlineColor, fillColor, objectClickbox);
                 }
             }
         }
@@ -61,20 +56,13 @@ public class NpcMarkerOverlay extends Overlay
     }
 
 
-    private void renderPoly(Graphics2D graphics, Color outlineColor, Color fillColor, Shape polygon, double width, boolean antiAlias)
+    private void renderPoly(Graphics2D graphics, Color outlineColor, Color fillColor, Shape polygon)
     {
         if (polygon != null)
         {
-            if (antiAlias)
-            {
-                graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            }
-            else
-            {
-                graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-            }
+            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             graphics.setColor(outlineColor);
-            graphics.setStroke(new BasicStroke((float) width));
+            graphics.setStroke(new BasicStroke((float) 2));
             graphics.draw(polygon);
             graphics.setColor(fillColor);
             graphics.fill(polygon);

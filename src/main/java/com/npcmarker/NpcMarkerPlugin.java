@@ -1,4 +1,4 @@
-package com.example;
+package com.npcmarker;
 
 import com.google.inject.Provides;
 import javax.inject.Inject;
@@ -6,27 +6,26 @@ import javax.inject.Inject;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
-import net.runelite.api.GameState;
 import net.runelite.api.NPC;
-import net.runelite.api.events.GameStateChanged;
-import net.runelite.client.config.Config;
+import net.runelite.api.events.HitsplatApplied;
+import net.runelite.api.events.NpcSpawned;
 import net.runelite.client.config.ConfigManager;
-import net.runelite.client.config.Keybind;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.NpcUtil;
 import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
-import net.runelite.client.ui.overlay.outline.ModelOutlineRenderer;
+import net.runelite.client.ui.overlay.infobox.InfoBox;
+import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import net.runelite.client.util.HotkeyListener;
-
+import net.runelite.client.util.ImageUtil;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import static net.runelite.api.HitsplatID.VENOM;
 
 @Slf4j
 @PluginDescriptor(
@@ -48,9 +47,26 @@ public class NpcMarkerPlugin extends Plugin
 	private ConfigManager configManager;
 	@Inject
 	private KeyManager keyManager;
+	@Inject
+	private InfoBoxManager infoBoxManager;
 
+	private final BufferedImage image = ImageUtil.loadImageResource(NpcMarkerPlugin.class, "/util/nex.png");
+
+	private final InfoBox activeBox = new InfoBox(image, this) {
+		@Override
+		public String getText() {
+			return null;
+		}
+
+		@Override
+		public Color getTextColor() {
+			return null;
+		}
+	};
+
+	private boolean active;
 	@Getter(AccessLevel.PACKAGE)
-	private final ArrayList<NPC> npcs = new ArrayList<NPC>();
+	private final ArrayList<NPC> npcs = new ArrayList<>();
 
 	private final HotkeyListener hotkeyListener = new HotkeyListener(() -> config.keybind()) {
 		@Override
@@ -58,7 +74,15 @@ public class NpcMarkerPlugin extends Plugin
 		{
 			if (config.keybind().matches(e))
 			{
-				addNpcs();
+				if (active)
+				{
+					reset();
+				}
+				else
+				{
+					infoBoxManager.addInfoBox(activeBox);
+					active = true;
+				}
 			}
 		}
 	};
@@ -79,22 +103,40 @@ public class NpcMarkerPlugin extends Plugin
 		keyManager.unregisterKeyListener(hotkeyListener);
 	}
 
-	private void addNpcs()
+	@Subscribe
+	public void onNpcSpawned(NpcSpawned npcSpawned)
 	{
-		for (NPC npc: client.getNpcs())
+		if (active)
 		{
-			if (npc != null || npc.getName() != null)
+			final NPC npc = npcSpawned.getNpc();
+			final String npcName = npc.getName();
+			if (npcName != null || !npcs.contains(npc))
 			{
-				if (!(npcs.contains(npc)))
+				if (config.excludeRangeMelee() && (npcName.equals("Spiritual warrior") || npcName.equals("Spiritual ranger")))
 				{
-					npcs.add(npc);
+					return;
 				}
+				npcs.add(npc);
+			}
+		}
+	}
+
+	@Subscribe
+	public void onHitsplatApplied(HitsplatApplied hitsplatApplied)
+	{
+		if (active)
+		{
+			if (hitsplatApplied.getHitsplat().getHitsplatType() == VENOM )
+			{
+				npcs.remove((NPC) hitsplatApplied.getActor());
 			}
 		}
 	}
 
 	private void reset()
 	{
+		active = false;
+		infoBoxManager.removeInfoBox(activeBox);
 		npcs.clear();
 	}
 
