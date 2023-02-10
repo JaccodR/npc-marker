@@ -50,7 +50,7 @@ public class NpcMarkerPlugin extends Plugin
 	@Inject
 	private InfoBoxManager infoBoxManager;
 
-	private final BufferedImage image = ImageUtil.loadImageResource(NpcMarkerPlugin.class, "/util/nex.png");
+	private final BufferedImage image = ImageUtil.loadImageResource(NpcMarkerPlugin.class, "/util/nexling.png");
 
 	private final InfoBox activeBox = new InfoBox(image, this) {
 		@Override
@@ -128,7 +128,10 @@ public class NpcMarkerPlugin extends Plugin
 		{
 			if (hitsplatApplied.getHitsplat().getHitsplatType() == VENOM )
 			{
-				npcs.remove((NPC) hitsplatApplied.getActor());
+				if (hitsplatApplied.getActor() instanceof NPC)
+				{
+					npcs.remove((NPC) hitsplatApplied.getActor());
+				}
 			}
 		}
 	}
